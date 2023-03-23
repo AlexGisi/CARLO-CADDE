@@ -1,9 +1,12 @@
+import time
 from entities import Entity
 from visualizer import Visualizer
+from agents import Car
 
 
 class World:
     def __init__(self, dt: float, width: float, height: float, ppm: float = 8):
+        self.ego = None  # Ego vehicle.
         self.dynamic_agents = []
         self.static_agents = []
         self.t = 0  # simulation time
@@ -16,6 +19,9 @@ class World:
         else:
             self.static_agents.append(entity)
 
+    def set_ego(self, ego: Car):
+        self.ego = ego
+
     def tick(self):
         for agent in self.dynamic_agents:
             agent.tick(self.dt)
@@ -24,6 +30,11 @@ class World:
     def render(self):
         self.visualizer.create_window(bg_color='gray')
         self.visualizer.update_agents(self.agents)
+
+    def advance(self, sleep: float):
+        self.tick()
+        self.render()
+        time.sleep(sleep)
 
     @property
     def agents(self):
@@ -42,7 +53,8 @@ class World:
                             return True
             return False
 
-        if not agent.collidable: return False
+        if not agent.collidable:
+            return False
 
         for i in range(len(self.agents)):
             if self.agents[i] is not agent and self.agents[i].collidable and agent.collidesWith(self.agents[i]):
