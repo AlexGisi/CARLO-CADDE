@@ -38,7 +38,7 @@ for lane_no in range(num_lanes - 1):
         dx = lane_markers_radius * np.cos(theta)
         dy = lane_markers_radius * np.sin(theta)
         w.add(Painting(Point(world_width/2 + dx, world_height/2 + dy), Point(lane_marker_width, lane_marker_height), 'white', heading = theta))
-    
+
 
 # A Car object is a dynamic object -- it can move. We construct it using its center location and heading angle.
 c1 = Car(Point(91.75,60), np.pi/2)
@@ -59,17 +59,17 @@ if not human_controller:
             lp += 0.
         elif c1.distanceTo(rb) < (num_lanes - desired_lane - 1)*(lane_width + lane_marker_width) + 0.3:
             lp += 1.
-        
+
         v = c1.center - cb.center
         v = np.mod(np.arctan2(v.y, v.x) + np.pi/2, 2*np.pi)
         if c1.heading < v:
             lp += 0.7
         else:
             lp += 0.
-        
+
         if np.random.rand() < lp: c1.set_control(0.2, 0.1)
         else: c1.set_control(-0.1, 0.1)
-        
+
         w.tick() # This ticks the world for one time step (dt second)
         w.render()
         time.sleep(dt/4) # Let's watch it 4x
@@ -82,7 +82,7 @@ else: # Let's use the keyboard input for human control
     from interactive_controllers import KeyboardController
     c1.set_control(0., 0.) # Initially, the car will have 0 steering and 0 throttle.
     controller = KeyboardController(w)
-    for k in range(600):
+    for k in range(60000):
         c1.set_control(controller.steering, controller.throttle)
         w.tick() # This ticks the world for one time step (dt second)
         w.render()
