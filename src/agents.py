@@ -1,11 +1,12 @@
 from entities import RectangleEntity, CircleEntity, RingEntity
 from geometry import Point
+from sensors import GPS
 
 
 # For colors, we use tkinter colors. See http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
 
 class Car(RectangleEntity):
-    def __init__(self, center: Point, heading: float, color: str = 'red', is_ego: bool = False):
+    def __init__(self, center: Point, heading: float, color: str = 'red', is_ego: bool = False, gps: GPS = None):
         size = Point(4., 2.)
         movable = True
         friction = 0.06
@@ -13,6 +14,7 @@ class Car(RectangleEntity):
         self.color = color
         self.collidable = True
         self.is_ego = is_ego
+        self.gps = gps
 
 
 class Pedestrian(CircleEntity):

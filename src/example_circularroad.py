@@ -2,6 +2,7 @@ import numpy as np
 from world import World
 from agents import Car, RingBuilding, CircleBuilding, Painting, Pedestrian
 from geometry import Point
+from sensors import GPS
 import time
 from tkinter import *
 import control.simple
@@ -34,6 +35,7 @@ rb = RingBuilding(Point(world_width / 2, world_height / 2),
                   1 + np.sqrt((world_width / 2) ** 2 + (world_height / 2) ** 2), 'gray80')
 w.add(rb)
 
+"""
 # Let's also add some lane markers on the ground. This is just decorative. Because, why not.
 for lane_no in range(num_lanes - 1):
     lane_markers_radius = inner_building_radius + (lane_no + 1) * lane_width + (lane_no + 0.5) * lane_marker_width
@@ -44,11 +46,22 @@ for lane_no in range(num_lanes - 1):
         dy = lane_markers_radius * np.sin(theta)
         w.add(Painting(Point(world_width / 2 + dx, world_height / 2 + dy), Point(lane_marker_width, lane_marker_height),
                        'white', heading=theta))
+"""
+num_traj_points = 100
+traj_radius = inner_building_radius + 1 * lane_width + 0.5 * lane_marker_width
+traj = list()  # X [m], Y [m], psi [rad], v [m/s]
+for theta in np.arange(0, 2 * np.pi, 2 * np.pi / num_traj_points):
+    dx = traj_radius * np.cos(theta)
+    dy = traj_radius * np.sin(theta)
+    traj.append((world_width / 2 + dx, world_height / 2 + dy, theta, 30))
+    w.add(Painting(Point(world_width / 2 + dx, world_height / 2 + dy), Point(0.4, 0.4),
+                   'white', heading=0))
 
 # A Car object is a dynamic object -- it can move. We construct it using its center location and heading angle.
-c1 = Car(Point(91.75, 60), np.pi / 2, is_ego=True)
+c1 = Car(Point(91.75, 60), np.pi / 2, is_ego=True, gps=GPS(w))
 c1.max_speed = 30.0  # let's say the maximum is 30 m/s (108 km/h)
 c1.velocity = Point(0, 3.0)
+
 w.add(c1)
 w.set_ego(c1)
 
