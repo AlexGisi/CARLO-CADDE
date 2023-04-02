@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from world import World
 from agents import Car, RingBuilding, CircleBuilding, Painting, Pedestrian
 from geometry import Point
@@ -6,6 +7,8 @@ from sensors import GPS
 import time
 from tkinter import *
 import control.simple
+import control.MPCTrack as mpc
+import control.Models as models
 
 human_controller = False
 
@@ -47,20 +50,26 @@ for lane_no in range(num_lanes - 1):
         w.add(Painting(Point(world_width / 2 + dx, world_height / 2 + dy), Point(lane_marker_width, lane_marker_height),
                        'white', heading=theta))
 """
-num_traj_points = 100
+num_traj_points = 80
 traj_radius = inner_building_radius + 1 * lane_width + 0.5 * lane_marker_width
-traj = list()  # X [m], Y [m], psi [rad], v [m/s]
+traj = list()  # X [m], Y [m], v [m/s], psi [rad]
 for theta in np.arange(0, 2 * np.pi, 2 * np.pi / num_traj_points):
     dx = traj_radius * np.cos(theta)
     dy = traj_radius * np.sin(theta)
-    traj.append((world_width / 2 + dx, world_height / 2 + dy, theta, 30))
+    traj.append((world_width / 2 + dx, world_height / 2 + dy, 30, 0))
     w.add(Painting(Point(world_width / 2 + dx, world_height / 2 + dy), Point(0.4, 0.4),
                    'white', heading=0))
+
+curvatures = np.array([1/traj_radius for _ in range(len(traj))])
+traj = np.array(traj)
+reference_traj = mpc.Reference(traj, curvatures)
 
 # A Car object is a dynamic object -- it can move. We construct it using its center location and heading angle.
 c1 = Car(Point(91.75, 60), np.pi / 2, is_ego=True, gps=GPS(w))
 c1.max_speed = 30.0  # let's say the maximum is 30 m/s (108 km/h)
-c1.velocity = Point(0, 3.0)
+car_xdot_t0 = 0
+car_ydot_t0 = 3.0
+c1.velocity = Point(car_xdot_t0, car_ydot_t0)
 
 w.add(c1)
 w.set_ego(c1)
@@ -68,10 +77,17 @@ w.set_ego(c1)
 w.render()  # This visualizes the world we just constructed.
 
 if not human_controller:
-    # Let's implement some simple policy for the car c1
     for k in range(600):
-        control.simple(w, lane_width, lane_marker_width,
-                       num_lanes, rb, cb)
+        model_car = models.Car(models.CarParams())
+        model_car.set_state(c1.get_state())
+
+        controller = mpc.MPC(copy.copy(reference_traj),
+                             models.KBModel(model_car, 0.1),
+                             mpc.ControllerConfig())
+        controls = controller.control()
+
+        print(controls[0], controls[1])
+        c1.set_control(inputSteering=controls[1], inputAcceleration=controls[0])
 
         w.advance(sleep=dt / 4)
 

@@ -16,6 +16,12 @@ class Car(RectangleEntity):
         self.is_ego = is_ego
         self.gps = gps
 
+    def get_state(self):
+        """
+        :return: [X, Y, xdot, ydot, psi, psidot]
+        """
+        return [self.center.x, self.center.y, self.velocity.x, self.velocity.y, self.heading, self.angular_velocity]
+
 
 class Pedestrian(CircleEntity):
     def __init__(self, center: Point, heading: float,
